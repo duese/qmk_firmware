@@ -11,6 +11,13 @@ RGB_MATRIX_ENABLE = yes
 # Enable audio keys and system control
 EXTRAKEY_ENABLE = yes
 
+# Enable Word Per Minute Calculation (needed by Luna)
+WPM_ENABLE = yes
+
 # Enable link time optimization
 # Trade longer compile time for smaller firmware size
 LTO_ENABLE = yes
+
+# Enable to allow debugging with `print`.
+# You may want to disable RGB_MATRIX_ENABLE to save bytes
+CONSOLE_ENABLE = no
