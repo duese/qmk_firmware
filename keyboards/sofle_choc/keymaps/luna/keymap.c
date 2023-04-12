@@ -120,44 +120,49 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 )
 };
 
+#if defined(ENCODER_MAP_ENABLE)
+const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
+    [_QWERTY] = { ENCODER_CCW_CW(KC_PGUP, KC_PGDN),   ENCODER_CCW_CW(KC_VOLD, KC_VOLU)  },
+    [_LOWER] =  { ENCODER_CCW_CW(RGB_HUD, RGB_HUI),   ENCODER_CCW_CW(RGB_SAD, RGB_SAI)  },
+    [_RAISE] =  { ENCODER_CCW_CW(RGB_VAD, RGB_VAI),   ENCODER_CCW_CW(RGB_SPD, RGB_SPI)  },
+    [_ADJUST] = { ENCODER_CCW_CW(RGB_RMOD, RGB_MOD),  ENCODER_CCW_CW(KC_RIGHT, KC_LEFT) },
+};
+#endif
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_PRVWD:
             if (record->event.pressed) {
                 if (keymap_config.swap_lctl_lgui) {
                     register_mods(mod_config(MOD_LALT));
-                    register_code(KC_LEFT);
                 } else {
                     register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_LEFT);
                 }
+                register_code(KC_LEFT);
             } else {
                 if (keymap_config.swap_lctl_lgui) {
                     unregister_mods(mod_config(MOD_LALT));
-                    unregister_code(KC_LEFT);
                 } else {
                     unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_LEFT);
                 }
+                unregister_code(KC_LEFT);
             }
             return false;
         case KC_NXTWD:
              if (record->event.pressed) {
                 if (keymap_config.swap_lctl_lgui) {
                     register_mods(mod_config(MOD_LALT));
-                    register_code(KC_RIGHT);
                 } else {
                     register_mods(mod_config(MOD_LCTL));
-                    register_code(KC_RIGHT);
                 }
+                register_code(KC_RIGHT);
             } else {
                 if (keymap_config.swap_lctl_lgui) {
                     unregister_mods(mod_config(MOD_LALT));
-                    unregister_code(KC_RIGHT);
                 } else {
                     unregister_mods(mod_config(MOD_LCTL));
-                    unregister_code(KC_RIGHT);
                 }
+                unregister_code(KC_RIGHT);
             }
             return false;
         case KC_LSTRT:
@@ -251,15 +256,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 }
 
-#if defined(ENCODER_MAP_ENABLE)
-const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][2] = {
-    [_QWERTY] = { ENCODER_CCW_CW(KC_PGUP, KC_PGDN),   ENCODER_CCW_CW(KC_VOLD, KC_VOLU)  },
-    [_LOWER] =  { ENCODER_CCW_CW(RGB_HUD, RGB_HUI),   ENCODER_CCW_CW(RGB_SAD, RGB_SAI)  },
-    [_RAISE] =  { ENCODER_CCW_CW(RGB_VAD, RGB_VAI),   ENCODER_CCW_CW(RGB_SPD, RGB_SPI)  },
-    [_ADJUST] = { ENCODER_CCW_CW(RGB_RMOD, RGB_MOD),  ENCODER_CCW_CW(KC_RIGHT, KC_LEFT) },
-};
-#endif
-
 #ifdef OLED_ENABLE
 
 static void render_logo(void) {
@@ -278,53 +274,64 @@ void write_int_ln(const char* prefix, uint8_t value) {
 }
 
 static void print_status_narrow(void) {
-    oled_write_ln_P(PSTR("SofleChoc _____"), false);
+    oled_set_cursor(0, 0);
+    oled_write_P(PSTR("SOFLE"), false);
+    oled_write_P(PSTR(" CHOC"), false);
 
     if (get_highest_layer(layer_state) == _ADJUST) {
+        oled_set_cursor(0, 3);
+        if (keymap_config.swap_lctl_lgui) {
+            oled_write_P(PSTR("MAC"), false);
+        } else {
+            oled_write_P(PSTR("WIN"), false);
+        }
+
+        # ifdef RGB_MATRIX_ENABLE
         uint8_t mode  = rgb_matrix_get_mode();
         HSV     hsv   = rgb_matrix_get_hsv();
         uint8_t speed = rgb_matrix_get_speed();
 
-        if (keymap_config.swap_lctl_lgui) {
-            oled_write_ln_P(PSTR("MAC\n"), false);
-        } else {
-            oled_write_ln_P(PSTR("WIN\n"), false);
-        }
-
+        oled_set_cursor(0, 5);
         oled_write_ln("RGB", false);
         write_int_ln(PSTR("Mo"), mode);
         write_int_ln(PSTR("H "), hsv.h);
         write_int_ln(PSTR("S "), hsv.s);
         write_int_ln(PSTR("V "), hsv.v);
         write_int_ln(PSTR("Sp"), speed);
-        oled_write_P(PSTR("\n\n\n"), false);
+        # endif
     } else {
-        oled_write_P(PSTR("\n\n\n\n\n\n\n\n\n"), false);
-        led_t led_usb_state = host_keyboard_led_state();
+        oled_set_cursor(0, 3);
+        // Clear 'adjust' layer output
+        oled_write_P(PSTR("\n\n\n\n\n\n\n\n"), false);
+
+        oled_set_cursor(0, 13);
         if (led_usb_state.caps_lock) {
-            oled_write_ln_P(PSTR(" CAP "), true);
+            oled_write_P(PSTR(" CAP "), true);
         } else {
-            oled_write_ln_P(PSTR("     "), false);
+            oled_write_P(PSTR("     "), false);
         }
     }
 
     // Print current layer
+    oled_set_cursor(0, 15);
     switch (get_highest_layer(layer_state)) {
         case _QWERTY:
             oled_write_P(PSTR("Alpha"), false);
             break;
         case _LOWER:
-            oled_write_P(PSTR("Nav  "), false);
+            oled_write_P(PSTR(" Nav "), false);
             break;
         case _RAISE:
-            oled_write_P(PSTR("Sym  "), false);
+            oled_write_P(PSTR(" Sym "), false);
             break;
         case _ADJUST:
-            oled_write_P(PSTR("Adj  "), false);
+            oled_write_P(PSTR(" Adj "), false);
             break;
         default:
-            oled_write_P(PSTR("???  "), false);
+            oled_write_P(PSTR(" ??? "), false);
     }
+    return;
+}
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
